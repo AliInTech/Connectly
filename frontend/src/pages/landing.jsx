@@ -1,8 +1,8 @@
 import React from 'react'
 import "../App.css"
 import { Link, useNavigate } from 'react-router-dom'
-export default function LandingPage() {
 
+export default function LandingPage() {
 
     const router = useNavigate();
 
@@ -18,17 +18,20 @@ export default function LandingPage() {
                     }}>Join as Guest</p>
                     <p onClick={() => {
                         router("/auth")
-
                     }}>Register</p>
                     <div onClick={() => {
                         router("/auth")
-
                     }} role='button'>
                         <p>Login</p>
                     </div>
+                    {/* Admin Panel Button Added */}
+                    <div onClick={() => {
+                        router("/admin")
+                    }} role='button' style={{ backgroundColor: "#FF9839", cursor: "pointer" }}>
+                        <p style={{ color: "white" }}>Admin</p>
+                    </div>
                 </div>
             </nav>
-
 
             <div className="landingMainContainer">
                 <div>
@@ -40,14 +43,9 @@ export default function LandingPage() {
                     </div>
                 </div>
                 <div>
-
                     <img src="/mobile.png" alt="" />
-
                 </div>
             </div>
-
-
-
         </div>
     )
 }
