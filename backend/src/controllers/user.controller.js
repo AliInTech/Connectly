@@ -98,9 +98,45 @@ const addToHistory = async (req, res) => {
     }
 };
 
+// ================= ADMIN DATA CONTROLLERS =================
+
+const getAdminStats = async (req, res) => {
+    try {
+        const totalUsers = await User.countDocuments();
+        const totalMeetings = await Meeting.countDocuments();
+        
+        return res.status(httpStatus.OK).json({ totalUsers, totalMeetings });
+    } catch (e) {
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
+    }
+};
+
+const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find({}, "-password -token");
+        return res.status(httpStatus.OK).json(users);
+    } catch (e) {
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
+    }
+};
+
+const deleteUser = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        await User.findByIdAndDelete(id);
+        return res.status(httpStatus.OK).json({ message: "User deleted successfully" });
+    } catch (e) {
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
+    }
+};
+
 export { 
     login, 
     register, 
     getUserHistory, 
-    addToHistory 
+    addToHistory, 
+    getAdminStats, 
+    getAllUsers, 
+    deleteUser 
 };
