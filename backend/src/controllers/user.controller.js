@@ -1,15 +1,18 @@
 import httpStatus from "http-status";
 import { User } from "../models/user.model.js";
-import bcrypt, { hash } from "bcrypt";
+import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { Meeting } from "../models/meeting.model.js";
+
+// List of hardcoded usernames/emails that automatically get Admin access
+const ADMIN_USERNAMES = ["admin", "admin@gmail.com"];
 
 // Standard User Login
 const login = async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
-        return res.status(400).json({ message: "Please Provide" });
+        return res.status(httpStatus.BAD_REQUEST).json({ message: "Please Provide credentials" });
     }
 
     try {
@@ -23,14 +26,24 @@ const login = async (req, res) => {
         if (isPasswordCorrect) {
             let token = crypto.randomBytes(20).toString("hex");
 
+            // Automatic Admin role assignment based on username check
+            let role = "user";
+            if (ADMIN_USERNAMES.includes(username.toLowerCase())) {
+                role = "admin";
+            } else if (user.role) {
+                role = user.role;
+            }
+
             user.token = token;
+            user.role = role;
             await user.save();
-            return res.status(httpStatus.OK).json({ token: token, role: user.role });
+            
+            return res.status(httpStatus.OK).json({ token: token, role: role });
         } else {
             return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid Username or password" });
         }
     } catch (e) {
-        return res.status(500).json({ message: `Something went wrong ${e}` });
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
     }
 };
 
@@ -46,17 +59,21 @@ const register = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Assign 'admin' role if username matches admin list, else assign 'user'
+        const role = ADMIN_USERNAMES.includes(username.toLowerCase()) ? "admin" : "user";
+
         const newUser = new User({
             name: name,
             username: username,
-            password: hashedPassword
+            password: hashedPassword,
+            role: role
         });
 
         await newUser.save();
 
         res.status(httpStatus.CREATED).json({ message: "User Registered" });
     } catch (e) {
-        res.json({ message: `Something went wrong ${e}` });
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
     }
 };
 
@@ -65,10 +82,13 @@ const getUserHistory = async (req, res) => {
 
     try {
         const user = await User.findOne({ token: token });
+        if (!user) {
+            return res.status(httpStatus.NOT_FOUND).json({ message: "User not found" });
+        }
         const meetings = await Meeting.find({ user_id: user.username });
-        res.json(meetings);
+        res.status(httpStatus.OK).json(meetings);
     } catch (e) {
-        res.json({ message: `Something went wrong ${e}` });
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
     }
 };
 
@@ -77,6 +97,9 @@ const addToHistory = async (req, res) => {
 
     try {
         const user = await User.findOne({ token: token });
+        if (!user) {
+            return res.status(httpStatus.NOT_FOUND).json({ message: "User not found" });
+        }
 
         const newMeeting = new Meeting({
             user_id: user.username,
@@ -87,35 +110,32 @@ const addToHistory = async (req, res) => {
 
         res.status(httpStatus.CREATED).json({ message: "Added code to history" });
     } catch (e) {
-        res.json({ message: `Something went wrong ${e}` });
+        res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
     }
 };
 
 // ================= ADMIN CONTROLLER FUNCTIONS =================
 
-// Fetch system analytics (Total Users & Total Meetings)
 const getAdminStats = async (req, res) => {
     try {
-        const totalUsers = await User.countDocuments({ role: "user" });
+        const totalUsers = await User.countDocuments();
         const totalMeetings = await Meeting.countDocuments();
         
         return res.status(httpStatus.OK).json({ totalUsers, totalMeetings });
     } catch (e) {
-        return res.status(500).json({ message: `Something went wrong ${e}` });
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
     }
 };
 
-// Get list of all registered users
 const getAllUsers = async (req, res) => {
     try {
         const users = await User.find({}, "-password -token");
         return res.status(httpStatus.OK).json(users);
     } catch (e) {
-        return res.status(500).json({ message: `Something went wrong ${e}` });
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
     }
 };
 
-// Delete a user by ID
 const deleteUser = async (req, res) => {
     const { id } = req.params;
 
@@ -123,7 +143,7 @@ const deleteUser = async (req, res) => {
         await User.findByIdAndDelete(id);
         return res.status(httpStatus.OK).json({ message: "User deleted successfully" });
     } catch (e) {
-        return res.status(500).json({ message: `Something went wrong ${e}` });
+        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
     }
 };
 
