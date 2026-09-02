@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import server from "../environment";
 import { 
     Container, Paper, Typography, Table, TableBody, 
@@ -11,20 +10,12 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState({ totalUsers: 0, totalMeetings: 0 });
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
 
     useEffect(() => {
-        // Standard Login Guard: Check if token exists
-        const token = localStorage.getItem("token");
-
-        if (!token) {
-            navigate("/auth");
-            return;
-        }
-
+        // Redirection logic completely removed
         fetchStats();
         fetchUsers();
-    }, [navigate]);
+    }, []);
 
     const fetchStats = async () => {
         try {
