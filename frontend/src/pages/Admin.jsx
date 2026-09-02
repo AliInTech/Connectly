@@ -14,13 +14,11 @@ export default function AdminDashboard() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Authorization Guard: Check if token exists & user role is admin
+        // Standard Login Guard: Check if token exists
         const token = localStorage.getItem("token");
-        const userRole = localStorage.getItem("role");
 
-        if (!token || userRole !== "admin") {
-            alert("Access Denied: Sirf Admin hi is page ko access kar sakte hain!");
-            navigate("/"); // Redirect to landing/home page
+        if (!token) {
+            navigate("/auth");
             return;
         }
 
@@ -49,10 +47,10 @@ export default function AdminDashboard() {
     };
 
     const handleDeleteUser = async (id) => {
-        if (!window.confirm("Kya aap is user ko delete karna chahte hain?")) return;
+        if (!window.confirm("Are you sure you want to delete this user?")) return;
         try {
             await axios.delete(`${server}/api/v1/users/admin/users/${id}`);
-            fetchUsers(); // Refresh list after delete
+            fetchUsers();
         } catch (err) {
             console.error("Error deleting user", err);
         }
@@ -63,7 +61,7 @@ export default function AdminDashboard() {
             <Container style={{ textAlign: "center", marginTop: "5rem" }}>
                 <CircularProgress />
                 <Typography variant="h6" style={{ marginTop: "1rem" }}>
-                    Verifying Admin Access...
+                    Loading Dashboard...
                 </Typography>
             </Container>
         );
@@ -72,7 +70,7 @@ export default function AdminDashboard() {
     return (
         <Container maxWidth="lg" style={{ marginTop: "2rem" }}>
             <Typography variant="h4" gutterBottom align="center">
-                Admin Dashboard
+                Dashboard Overview
             </Typography>
             
             {/* Stats Overview Cards */}
@@ -105,7 +103,6 @@ export default function AdminDashboard() {
                         <TableRow>
                             <TableCell><b>Name</b></TableCell>
                             <TableCell><b>Username</b></TableCell>
-                            <TableCell><b>Role</b></TableCell>
                             <TableCell><b>Action</b></TableCell>
                         </TableRow>
                     </TableHead>
@@ -114,17 +111,14 @@ export default function AdminDashboard() {
                             <TableRow key={u._id}>
                                 <TableCell>{u.name}</TableCell>
                                 <TableCell>{u.username}</TableCell>
-                                <TableCell>{u.role || "user"}</TableCell>
                                 <TableCell>
-                                    {u.role !== "admin" && (
-                                        <Button 
-                                            variant="contained" 
-                                            color="error" 
-                                            onClick={() => handleDeleteUser(u._id)}
-                                        >
-                                            Delete User
-                                        </Button>
-                                    )}
+                                    <Button 
+                                        variant="contained" 
+                                        color="error" 
+                                        onClick={() => handleDeleteUser(u._id)}
+                                    >
+                                        Delete User
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                         ))}
