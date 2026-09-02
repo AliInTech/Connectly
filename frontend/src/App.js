@@ -6,7 +6,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import VideoMeetComponent from './pages/VideoMeet';
 import HomeComponent from './pages/home';
 import History from './pages/history';
-import AdminDashboard from './pages/admin'; // Admin Page Import Kiya
+import AdminDashboard from './pages/Admin'; // Capital 'A' ke saath updated
 
 function App() {
   return (
@@ -22,7 +22,7 @@ function App() {
             {/* Admin Route */}
             <Route path='/admin' element={<AdminDashboard />} />
 
-            {/* Dynamic Room URL Route (Isse routes ke aakhir me hi rakhein) */}
+            {/* Dynamic Room URL Route */}
             <Route path='/:url' element={<VideoMeetComponent />} />
           </Routes>
         </AuthProvider>
