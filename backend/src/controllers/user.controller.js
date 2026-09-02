@@ -4,9 +4,6 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { Meeting } from "../models/meeting.model.js";
 
-// List of hardcoded usernames/emails that automatically get Admin access
-const ADMIN_USERNAMES = ["admin", "admin@gmail.com"];
-
 // Standard User Login
 const login = async (req, res) => {
     const { username, password } = req.body;
@@ -26,19 +23,10 @@ const login = async (req, res) => {
         if (isPasswordCorrect) {
             let token = crypto.randomBytes(20).toString("hex");
 
-            // Automatic Admin role assignment based on username check
-            let role = "user";
-            if (ADMIN_USERNAMES.includes(username.toLowerCase())) {
-                role = "admin";
-            } else if (user.role) {
-                role = user.role;
-            }
-
             user.token = token;
-            user.role = role;
             await user.save();
             
-            return res.status(httpStatus.OK).json({ token: token, role: role });
+            return res.status(httpStatus.OK).json({ token: token });
         } else {
             return res.status(httpStatus.UNAUTHORIZED).json({ message: "Invalid Username or password" });
         }
@@ -59,14 +47,10 @@ const register = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Assign 'admin' role if username matches admin list, else assign 'user'
-        const role = ADMIN_USERNAMES.includes(username.toLowerCase()) ? "admin" : "user";
-
         const newUser = new User({
             name: name,
             username: username,
-            password: hashedPassword,
-            role: role
+            password: hashedPassword
         });
 
         await newUser.save();
@@ -114,45 +98,9 @@ const addToHistory = async (req, res) => {
     }
 };
 
-// ================= ADMIN CONTROLLER FUNCTIONS =================
-
-const getAdminStats = async (req, res) => {
-    try {
-        const totalUsers = await User.countDocuments();
-        const totalMeetings = await Meeting.countDocuments();
-        
-        return res.status(httpStatus.OK).json({ totalUsers, totalMeetings });
-    } catch (e) {
-        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
-    }
-};
-
-const getAllUsers = async (req, res) => {
-    try {
-        const users = await User.find({}, "-password -token");
-        return res.status(httpStatus.OK).json(users);
-    } catch (e) {
-        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
-    }
-};
-
-const deleteUser = async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        await User.findByIdAndDelete(id);
-        return res.status(httpStatus.OK).json({ message: "User deleted successfully" });
-    } catch (e) {
-        return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ message: `Something went wrong ${e}` });
-    }
-};
-
 export { 
     login, 
     register, 
     getUserHistory, 
-    addToHistory, 
-    getAdminStats, 
-    getAllUsers, 
-    deleteUser 
+    addToHistory 
 };

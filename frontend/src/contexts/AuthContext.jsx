@@ -38,23 +38,9 @@ export const AuthProvider = ({ children }) => {
                 password: password
             });
 
-            console.log(username, password);
-            console.log(request.data);
-
             if (request.status === httpStatus.OK) {
-                // Save Token and Role to localStorage
                 localStorage.setItem("token", request.data.token);
-                
-                const userRole = request.data.role || "user";
-                localStorage.setItem("role", userRole);
-
-                // Role-based direction
-                if (userRole === "admin") {
-                    router("/admin");
-                } else {
-                    router("/home");
-                }
-                
+                router("/home");
                 return request.data;
             }
         } catch (err) {
@@ -81,7 +67,7 @@ export const AuthProvider = ({ children }) => {
                 token: localStorage.getItem("token"),
                 meeting_code: meetingCode
             });
-                return request;
+            return request;
         } catch (e) {
             throw e;
         }
