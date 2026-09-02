@@ -1,51 +1,32 @@
 import mongoose from "mongoose";
 import { User } from "./models/user.model.js";
-import bcrypt from "bcrypt";
 
-const MONGO_URI = "mongodb+srv://imdigitalashish:imdigitalashish@cluster0.cujabk4.mongodb.net/"; 
+const MONGO_URI = "mongodb+srv://imdigitalashish:imdigitalashish@cluster0.cujabk4.mongodb.net/connectly?retryWrites=true&w=majority"; 
 
-const createAdminUser = async () => {
+const makeUserAdmin = async () => {
     try {
         await mongoose.connect(MONGO_URI);
-        console.log("Connected to Database successfully!");
+        console.log("Database connected successfully!");
 
-        // Naye admin user ki details:
-        const adminData = {
-            name: "Admin User",
-            username: "admin",      // Log in karne ke liye Username
-            password: "adminpassword" // Log in karne ke liye Password
-        };
+        // Yahan apna exact username dalein jo aapne register kiya tha
+        const targetUsername = "APNA_USERNAME_HERE"; 
 
-        // Check agar ye username pehle se exist karta hai
-        const existingUser = await User.findOne({ username: adminData.username });
-        
-        if (existingUser) {
-            existingUser.role = "admin";
-            await existingUser.save();
-            console.log(`✅ SUCCESS: Existing User '${adminData.username}' ko Admin role de diya gaya hai!`);
+        const user = await User.findOne({ username: targetUsername });
+
+        if (!user) {
+            console.log(`❌ User '${targetUsername}' nahi mila! Make sure username sahi ho.`);
         } else {
-            // Secret Password Hash karein
-            const hashedPassword = await bcrypt.hash(adminData.password, 10);
-            
-            const newAdmin = new User({
-                name: adminData.name,
-                username: adminData.username,
-                password: hashedPassword,
-                role: "admin"
-            });
-
-            await newAdmin.save();
-            console.log(`✅ SUCCESS: Naya Admin User Ban Gaya!`);
-            console.log(`Username: ${adminData.username}`);
-            console.log(`Password: ${adminData.password}`);
+            user.role = "admin";
+            await user.save();
+            console.log(`✅ Success! User '${targetUsername}' ab Admin ban chuka hai.`);
         }
 
     } catch (error) {
         console.error("Error:", error);
     } finally {
         await mongoose.disconnect();
-        process.exit();
+        process.exit(0);
     }
 };
 
-createAdminUser();
+makeUserAdmin();
