@@ -3,49 +3,36 @@ import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import CssBaseline from '@mui/material/CssBaseline';
 import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import Typography from '@mui/material/Typography';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'; // Back Icon
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { AuthContext } from '../contexts/AuthContext';
 import { Snackbar } from '@mui/material';
-
-
-
-// TODO remove, this demo shouldn't need to reset the theme.
+import { useNavigate } from 'react-router-dom';
 
 const defaultTheme = createTheme();
 
 export default function Authentication() {
-
-    
-
-    const [username, setUsername] = React.useState();
-    const [password, setPassword] = React.useState();
-    const [name, setName] = React.useState();
-    const [error, setError] = React.useState();
-    const [message, setMessage] = React.useState();
-
-
+    const [username, setUsername] = React.useState("");
+    const [password, setPassword] = React.useState("");
+    const [name, setName] = React.useState("");
+    const [error, setError] = React.useState("");
+    const [message, setMessage] = React.useState("");
     const [formState, setFormState] = React.useState(0);
-
-    const [open, setOpen] = React.useState(false)
-
+    const [open, setOpen] = React.useState(false);
 
     const { handleRegister, handleLogin } = React.useContext(AuthContext);
+    const navigate = useNavigate();
 
     let handleAuth = async () => {
         try {
             if (formState === 0) {
-
-                let result = await handleLogin(username, password)
-
-
+                let result = await handleLogin(username, password);
+                // Redirect user to home or admin panel based on role after login
+                navigate("/home");
             }
             if (formState === 1) {
                 let result = await handleRegister(name, username, password);
@@ -53,23 +40,47 @@ export default function Authentication() {
                 setUsername("");
                 setMessage(result);
                 setOpen(true);
-                setError("")
-                setFormState(0)
-                setPassword("")
+                setError("");
+                setFormState(0);
+                setPassword("");
             }
         } catch (err) {
-
             console.log(err);
-            let message = (err.response.data.message);
+            let message = err.response?.data?.message || "Something went wrong";
             setError(message);
         }
-    }
-
+    };
 
     return (
         <ThemeProvider theme={defaultTheme}>
-            <Grid container component="main" sx={{ height: '100vh' }}>
+            <Grid container component="main" sx={{ height: '100vh', position: 'relative' }}>
                 <CssBaseline />
+
+                {/* Back to Home Button (Top Left) */}
+                <Box 
+                    sx={{ 
+                        position: 'absolute', 
+                        top: 16, 
+                        left: 16, 
+                        zIndex: 10 
+                    }}
+                >
+                    <Button
+                        variant="contained"
+                        startIcon={<ArrowBackIcon />}
+                        onClick={() => navigate("/")}
+                        sx={{ 
+                            bgcolor: '#FF9839', 
+                            '&:hover': { bgcolor: '#e0832b' },
+                            borderRadius: '20px',
+                            textTransform: 'none',
+                            fontWeight: 'bold'
+                        }}
+                    >
+                        Back to Home
+                    </Button>
+                </Box>
+
                 <Grid
                     item
                     xs={false}
@@ -98,7 +109,6 @@ export default function Authentication() {
                             <LockOutlinedIcon />
                         </Avatar>
 
-
                         <div>
                             <Button variant={formState === 0 ? "contained" : ""} onClick={() => { setFormState(0) }}>
                                 Sign In
@@ -109,17 +119,19 @@ export default function Authentication() {
                         </div>
 
                         <Box component="form" noValidate sx={{ mt: 1 }}>
-                            {formState === 1 ? <TextField
-                                margin="normal"
-                                required
-                                fullWidth
-                                id="username"
-                                label="Full Name"
-                                name="username"
-                                value={name}
-                                autoFocus
-                                onChange={(e) => setName(e.target.value)}
-                            /> : <></>}
+                            {formState === 1 ? (
+                                <TextField
+                                    margin="normal"
+                                    required
+                                    fullWidth
+                                    id="name"
+                                    label="Full Name"
+                                    name="name"
+                                    value={name}
+                                    autoFocus
+                                    onChange={(e) => setName(e.target.value)}
+                                />
+                            ) : null}
 
                             <TextField
                                 margin="normal"
@@ -129,9 +141,8 @@ export default function Authentication() {
                                 label="Username"
                                 name="username"
                                 value={username}
-                                autoFocus
+                                autoFocus={formState === 0}
                                 onChange={(e) => setUsername(e.target.value)}
-
                             />
                             <TextField
                                 margin="normal"
@@ -142,11 +153,10 @@ export default function Authentication() {
                                 value={password}
                                 type="password"
                                 onChange={(e) => setPassword(e.target.value)}
-
                                 id="password"
                             />
 
-                            <p style={{ color: "red" }}>{error}</p>
+                            {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
 
                             <Button
                                 type="button"
@@ -155,21 +165,19 @@ export default function Authentication() {
                                 sx={{ mt: 3, mb: 2 }}
                                 onClick={handleAuth}
                             >
-                                {formState === 0 ? "Login " : "Register"}
+                                {formState === 0 ? "Login" : "Register"}
                             </Button>
-
                         </Box>
                     </Box>
                 </Grid>
             </Grid>
 
             <Snackbar
-
                 open={open}
                 autoHideDuration={4000}
+                onClose={() => setOpen(false)}
                 message={message}
             />
-
         </ThemeProvider>
     );
 }

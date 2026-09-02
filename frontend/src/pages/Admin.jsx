@@ -1,19 +1,32 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import server from "../environment";
 import { 
     Container, Paper, Typography, Table, TableBody, 
-    TableCell, TableHead, TableRow, Button, Grid, Card, CardContent 
+    TableCell, TableHead, TableRow, Button, Grid, Card, CardContent, CircularProgress 
 } from "@mui/material";
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState({ totalUsers: 0, totalMeetings: 0 });
     const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
+        // Authorization Guard: Check if token exists & user role is admin
+        const token = localStorage.getItem("token");
+        const userRole = localStorage.getItem("role");
+
+        if (!token || userRole !== "admin") {
+            alert("Access Denied: Sirf Admin hi is page ko access kar sakte hain!");
+            navigate("/"); // Redirect to landing/home page
+            return;
+        }
+
         fetchStats();
         fetchUsers();
-    }, []);
+    }, [navigate]);
 
     const fetchStats = async () => {
         try {
@@ -30,6 +43,8 @@ export default function AdminDashboard() {
             setUsers(res.data);
         } catch (err) {
             console.error("Error fetching users", err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -42,6 +57,17 @@ export default function AdminDashboard() {
             console.error("Error deleting user", err);
         }
     };
+
+    if (loading) {
+        return (
+            <Container style={{ textAlign: "center", marginTop: "5rem" }}>
+                <CircularProgress />
+                <Typography variant="h6" style={{ marginTop: "1rem" }}>
+                    Verifying Admin Access...
+                </Typography>
+            </Container>
+        );
+    }
 
     return (
         <Container maxWidth="lg" style={{ marginTop: "2rem" }}>
